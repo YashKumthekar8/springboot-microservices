@@ -1,0 +1,97 @@
+name: yashk-microservices
+services:
+
+  rabbit:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 10s
+      timeout: 30s
+      retries: 10
+      start_period: 5s
+
+    networks:
+      - yknetwork
+
+  configserver:
+    image: "yashkumthekar/configserver:latest"
+    container_name: configserver-yk
+    restart: unless-stopped
+    ports:
+      - "8071:8071"
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8071 && printf 'GET /actuator/health/readiness HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && grep -q '\"status\":\"UP\"' <&3"]
+      interval: 10s
+      timeout: 30s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      rabbit:
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: "rabbit"
+
+    networks: 
+      - yknetwork
+
+  accounts:
+    image: "yashkumthekar/accounts:latest"
+    container_name: accounts-yk
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    depends_on:
+      configserver:
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: "rabbit"
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      SPRING_PROFILES_ACTIVE: default
+
+    networks: 
+      - yknetwork
+
+  cards:
+    image: "yashkumthekar/cards:latest"
+    container_name: cards-yk
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    depends_on:
+      configserver:
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: "rabbit"
+      SPRING_CONFIG_IMPORT: configserver:http://configserver:8071/
+      SPRING_PROFILES_ACTIVE: default
+
+    networks:
+      - yknetwork
+
+
+networks:
+  yknetwork:
+    driver: bridge

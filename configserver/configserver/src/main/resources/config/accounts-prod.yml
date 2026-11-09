@@ -1,0 +1,8 @@
+accounts:
+  message: "Welcome to Yash Bank accounts service - Production"
+  contactDetails:
+    name: "Yash K - Developer"
+    email: "yash@gmail.com"
+  onCallSupport:
+    - 9869114
+    - 9089876

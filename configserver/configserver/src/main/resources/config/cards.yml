@@ -1,0 +1,8 @@
+cards:
+  message: "Welcome to Yash Bank cards service"
+  contactDetails:
+    name: "Yash Kumthekar - Developer"
+    email: "yash@gmail.com"
+  onCallSupport:
+    - 9869114
+    - 9089876
