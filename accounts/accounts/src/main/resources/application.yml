@@ -3,41 +3,70 @@ server:
 spring:
   application:
     name: accounts
+  profiles:
+    active:
+    - "prod"
   datasource:
-    url: jdbc:h2:mem:testdb
-    driverClassName: org.h2.Driver
+    url: "jdbc:h2:mem:testdb"
+    driverClassName: "org.h2.Driver"
     username: sa
     password: ''
   h2:
     console:
-      enabled: true 
-
+      enabled: true
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: "org.hibernate.dialect.H2Dialect"
     hibernate:
       ddl-auto: update
     show-sql: true
-
-  profiles:
-    active:
-    - "prod"
-    # - "qa"
-
   config:
     import: "optional:configserver:http://localhost:8071/"
-  
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: "guest"
-    password: "guest"
+  http:
+    serviceclient:
+      cards:
+        base-url: lb://cards
 
 logging:
   pattern:
     console: ${CONSOLE_LOG_PATTERN:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}) - %cyan(%msg%n)}
+  level:
+    com:
+        project:
+            accounts: DEBUG
 
 management:
   endpoints:
     web:
       exposure:
         include: "*"
+  endpoint:
+    shutdown:
+      access: unrestricted
+    health:
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: true
+  health:
+    readiness-state:
+      enabled: true
+    liveness-state:
+      enabled: true
+
+eureka:
+  instance:
+    preferIpAddress: true
+  client:
+    fetchRegistry: true
+    registerWithEureka: true
+    serviceUrl:
+      defaultZone: http://localhost:8070/eureka/
+
+info:
+  app:
+    name: "accounts"
+    description: "Bank Accounts Application"
+    version: "1.0.0"
+
+

@@ -8,8 +8,8 @@ import com.project.cards.entity.Cards;
 
 public interface CardsRepository extends JpaRepository<Cards, Long>{
     
-    Optional<Cards> findByMobileNo(String mobileNo);
+    Optional<Cards> findByMobileNumber(String mobileNumber);
 
-    Optional<Cards> findByCardNo(String cardNo);
+    Optional<Cards> findByCardNumber(String cardNumber);
 
 }

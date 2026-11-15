@@ -1,6 +1,7 @@
 package com.project.accounts.mapper;
 
 import com.project.accounts.dto.CustomerDTO;
+import com.project.accounts.dto.CustomerDetailsDTO;
 import com.project.accounts.entity.Customer;
 
 public class CustomerMapper {
@@ -17,6 +18,13 @@ public class CustomerMapper {
         customer.setEmail(customerDto.getEmail());
         customer.setMobileNumber(customerDto.getMobileNumber());
         return customer;
+    }
+
+    public static CustomerDetailsDTO mapToCustomerDetailsDTO(Customer customer, CustomerDetailsDTO customerDetailsDTO){
+        customerDetailsDTO.setName(customer.getName());
+        customerDetailsDTO.setEmail(customer.getEmail());
+        customerDetailsDTO.setMobileNumber(customer.getMobileNumber());
+        return customerDetailsDTO;
     }
 
 }

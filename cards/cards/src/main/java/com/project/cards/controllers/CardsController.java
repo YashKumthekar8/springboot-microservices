@@ -1,11 +1,14 @@
 package com.project.cards.controllers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +30,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Validated 
 public class CardsController {
     
+    private static final Logger logger = LoggerFactory.getLogger(CardsController.class);
     private final CardsService cardsService;
     public CardsController(CardsService cardsService){
         this.cardsService = cardsService;
@@ -37,19 +41,21 @@ public class CardsController {
 
     @PostMapping ("/create")
     public ResponseEntity<ResponseDto> createCard(@Valid @RequestParam 
-        String mobileNo
+        String mobileNumber
     ) {
-        cardsService.createCard(mobileNo);
+        cardsService.createCard(mobileNumber);
         return ResponseEntity.status(HttpStatus.CREATED)
         .body(new ResponseDto(CardsConstants.STATUS_201, CardsConstants.MESSAGE_201));
     }
 
 
     @GetMapping("/fetch")
-    public ResponseEntity<CardsDto> fetchCardDetails(@Valid @RequestParam 
-        String mobileNo
+    public ResponseEntity<CardsDto> fetchCardDetails(
+        @RequestHeader("correlation-id") String correlationId,
+        @Valid @RequestParam String mobileNumber
     ) {
-        CardsDto cardsDto = cardsService.fetchCard(mobileNo);
+        logger.debug("correlation-id found: {} ", correlationId);
+        CardsDto cardsDto = cardsService.fetchCard(mobileNumber);
         return ResponseEntity.status(HttpStatus.OK)
         .body(cardsDto);
     }
@@ -71,8 +77,8 @@ public class CardsController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<ResponseDto> deleteCardDetails(@RequestParam String mobileNo) {
-        boolean isDeleted = cardsService.deleteCard(mobileNo);
+    public ResponseEntity<ResponseDto> deleteCardDetails(@RequestParam String mobileNumber) {
+        boolean isDeleted = cardsService.deleteCard(mobileNumber);
         if(isDeleted) {
             return ResponseEntity
                     .status(HttpStatus.OK)
@@ -91,6 +97,4 @@ public class CardsController {
                 .status(HttpStatus.OK)
                 .body(cardsContactInfoDto);
     }
-
-    
 }
