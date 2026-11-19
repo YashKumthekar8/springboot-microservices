@@ -1,5 +1,6 @@
 server:
   port: 9000
+
 spring:
   application:
     name: cards
@@ -66,3 +67,12 @@ info:
     name: "cards"
     description: "Bank Cards Application"
     version: "1.0.0"
+
+
+resilience4j.bulkhead:
+  configs:
+    default:
+      max-concurrent-calls: 2
+      max-wait-duration: 1
+      
+      

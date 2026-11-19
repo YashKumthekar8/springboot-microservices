@@ -3,6 +3,7 @@ package com.project.cards.controllers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import com.project.cards.dto.CardsDto;
 import com.project.cards.dto.ResponseDto;
 import com.project.cards.services.CardsService;
 
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,6 +40,10 @@ public class CardsController {
 
     @Autowired 
     CardsContactInfoDto cardsContactInfoDto;
+
+
+    @Value ("${build.version")
+    private String buildVersion;
 
     @PostMapping ("/create")
     public ResponseEntity<ResponseDto> createCard(@Valid @RequestParam 
@@ -88,6 +94,22 @@ public class CardsController {
                     .status(HttpStatus.EXPECTATION_FAILED)
                     .body(new ResponseDto(CardsConstants.STATUS_417, CardsConstants.MESSAGE_417_DELETE));
         }
+    }
+
+    @Bulkhead(name="getBuildInfo", fallbackMethod = "getBuildInfoFallback")
+    @GetMapping("/build-info")
+    public ResponseEntity<String> getBuildInfo() throws InterruptedException {
+        logger.debug("getBuildInfo() method Invoked");
+        Thread.sleep(6000); // simulate a slow call so concurrency limit is easy to hit
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(buildVersion);
+    }
+
+    public ResponseEntity<String> getBuildInfoFallback(Throwable throwable) {
+        logger.debug("getBuildInfoFallback() method Invoked");
+        return ResponseEntity.status(HttpStatus.OK)
+                .body("GetBuildInfo API Fallback - Too many concurrent requests, please try again later!!!");
     }
 
 

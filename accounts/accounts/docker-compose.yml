@@ -23,7 +23,7 @@ services:
       - yknetwork
 
   configserver:
-    image: "yashkumthekar/configserver:latest"
+    image: "yashkumthekar/configserver:s6"
     container_name: configserver-yk
     restart: unless-stopped
     ports:
@@ -48,7 +48,7 @@ services:
       - yknetwork
 
   accounts:
-    image: "yashkumthekar/accounts:latest"
+    image: "yashkumthekar/accounts:s6"
     container_name: accounts-yk
     restart: unless-stopped
     ports:
@@ -70,7 +70,7 @@ services:
       - yknetwork
 
   cards:
-    image: "yashkumthekar/cards:latest"
+    image: "yashkumthekar/cards:s6"
     container_name: cards-yk
     restart: unless-stopped
     ports:
