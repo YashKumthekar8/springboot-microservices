@@ -1,5 +1,7 @@
 package com.project.accounts.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +23,14 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor 
 public class CustomerService {
 
+    private static final Logger logger = LoggerFactory.getLogger(CustomerService.class);
     private AccountsRepository accountsRepository;
     private CustomerRepository customerRepository;
     private CardsClient cardsClient;
 
-    public CustomerDetailsDTO fetchCustomerDetails(String mobileNumber, String correlationId){
-
+    public CustomerDetailsDTO fetchCustomerDetails(String mobileNumber){
+        logger.debug("Looking up customer by mobileNumber: {}", mobileNumber);
+        
         Customer customer = customerRepository.findByMobileNumber(mobileNumber).orElseThrow(
                 () -> new ResourceNotFoundException("Customer", "mobileNumber", mobileNumber)
         );
@@ -37,9 +41,13 @@ public class CustomerService {
         CustomerDetailsDTO customerDetailsDto = CustomerMapper.mapToCustomerDetailsDTO(customer, new CustomerDetailsDTO());
         customerDetailsDto.setAccountsDTO(AccountsMapper.mapToAccountsDTO(accounts, new AccountsDTO()));
     
-        ResponseEntity<CardsDTO> cardsDTOResponse = cardsClient.fetchCardDetails(correlationId, mobileNumber);
-        customerDetailsDto.setCardsDTO(cardsDTOResponse.getBody());
-
+        logger.debug("Calling cards service for mobileNumber: {}", mobileNumber);
+        ResponseEntity<CardsDTO> cardsDTOResponse = cardsClient.fetchCardDetails(mobileNumber);
+        if(null != cardsDTOResponse) {
+            customerDetailsDto.setCardsDTO(cardsDTOResponse.getBody());
+        } else {
+            logger.warn("Cards service call failed or fell back for mobileNumber: {}", mobileNumber);
+        }
         return customerDetailsDto;
     }
     

@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class AccountsController {
 
-        private static final Logger logger = LoggerFactory.getLogger(AccountsController.class);
+    private static final Logger logger = LoggerFactory.getLogger(AccountsController.class);
     private final AccountsService accountsService;
 
     public AccountsController(AccountsService accountsService){
@@ -74,7 +74,9 @@ public class AccountsController {
     )
     @PostMapping("/create")
     public ResponseEntity<ResponseDTO> createAccount(@Valid @RequestBody CustomerDTO customerDTO){
+        logger.info("Creating account for mobileNumber: {}", customerDTO.getMobileNumber());
         accountsService.createAccount(customerDTO);
+        logger.info("Successfully created account for mobileNumber: {}", customerDTO.getMobileNumber());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new ResponseDTO(AccountsConstants.STATUS_201, AccountsConstants.MESSAGE_201));
@@ -103,6 +105,7 @@ public class AccountsController {
     public ResponseEntity<CustomerDTO> fetchAccountDetails(@RequestParam
                                                            @Pattern(regexp="(^$|[0-9]{10})",message = "Mobile number must be 10 digits")
                                                            String mobileNumber) {
+        logger.info("Fetching account details for mobileNumber: {}", mobileNumber);
         CustomerDTO customerDto = accountsService.fetchAccount(mobileNumber);
         return ResponseEntity.status(HttpStatus.OK).body(customerDto);
     }
@@ -131,12 +134,15 @@ public class AccountsController {
     )
     @PutMapping("/update")
     public ResponseEntity<ResponseDTO> updateAccountDetails(@Valid @RequestBody CustomerDTO customerDTO) {
+        logger.info("Updating account details for mobileNumber: {}", customerDTO.getMobileNumber());
         boolean isUpdated = accountsService.updateAccount(customerDTO);
         if(isUpdated) {
+            logger.info("Successfully updated account details for mobileNumber: {}", customerDTO.getMobileNumber());
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(new ResponseDTO(AccountsConstants.STATUS_200, AccountsConstants.MESSAGE_200));
         }else{
+            logger.warn("Failed to update account details for mobileNumber: {}", customerDTO.getMobileNumber());    
             return ResponseEntity
                     .status(HttpStatus.EXPECTATION_FAILED)
                     .body(new ResponseDTO(AccountsConstants.STATUS_417, AccountsConstants.MESSAGE_417_UPDATE));
@@ -169,12 +175,15 @@ public class AccountsController {
     public ResponseEntity<ResponseDTO> deleteAccountDetails(@RequestParam
                                                             @Pattern(regexp="(^$|[0-9]{10})",message = "Mobile number must be 10 digits")
                                                             String mobileNumber) {
+        logger.info("Deleting account details for mobileNumber: {}", mobileNumber);
         boolean isDeleted = accountsService.deleteAccount(mobileNumber);
-        if(isDeleted) {
+        if (isDeleted) {
+            logger.info("Successfully deleted account details for mobileNumber: {}", mobileNumber);
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(new ResponseDTO(AccountsConstants.STATUS_200, AccountsConstants.MESSAGE_200));
-        }else{
+        } else {
+            logger.warn("Failed to delete account details for mobileNumber: {}", mobileNumber);
             return ResponseEntity
                     .status(HttpStatus.EXPECTATION_FAILED)
                     .body(new ResponseDTO(AccountsConstants.STATUS_417, AccountsConstants.MESSAGE_417_DELETE));

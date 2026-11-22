@@ -12,6 +12,19 @@ services:
     extends:
       file: common-config.yml
       service: network-deploy-service
+
+  grafana-lgtm:
+    image: 'grafana/otel-lgtm'
+    container_name: grafana-lgtm-yk
+    ports:
+      - '3000:3000'
+      - '4317:4317'
+      - '4318:4318'
+    volumes:
+      - grafana-lgtm-data:/data
+    extends:
+      file: common-config.yml
+      service: network-deploy-service
   
   configserver:
     image: "yashkumthekar/configserver:${IMAGE_TAG:-s6}"
@@ -112,3 +125,6 @@ services:
 networks:
   yknetwork:
     driver: bridge
+
+volumes:
+  grafana-lgtm-data:

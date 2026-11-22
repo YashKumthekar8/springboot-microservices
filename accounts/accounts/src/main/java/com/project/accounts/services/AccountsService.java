@@ -12,7 +12,12 @@ import com.project.accounts.mapper.AccountsMapper;
 import com.project.accounts.mapper.CustomerMapper;
 import com.project.accounts.repository.AccountsRepository;
 import com.project.accounts.repository.CustomerRepository;
+
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.AllArgsConstructor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -22,20 +27,25 @@ import java.util.Random;
 @AllArgsConstructor
 public class AccountsService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AccountsService.class);
+
     private AccountsRepository accountsRepository;
     private CustomerRepository customerRepository;
+    private MeterRegistry meterRegistry;
 
-
-    public void createAccount(CustomerDTO customerDTO){
-        Customer customer = CustomerMapper.mapToCustomer(customerDTO, new Customer());
-        Optional<Customer> optionalCustomer = customerRepository.findByMobileNumber(customerDTO.getMobileNumber());
-        if(optionalCustomer.isPresent()){
-            throw new CustomerAlreadyExistsException("Customer already registered with given mobile number " +
-                    customerDTO.getMobileNumber());
+    public void createAccount(CustomerDTO customerDto) {
+        Customer customer = CustomerMapper.mapToCustomer(customerDto, new Customer());
+        Optional<Customer> optionalCustomer = customerRepository.findByMobileNumber(customerDto.getMobileNumber());
+        if(optionalCustomer.isPresent()) {
+            logger.warn("Customer already registered with mobileNumber: {}", customerDto.getMobileNumber());
+            throw new CustomerAlreadyExistsException("Customer already registered with given mobileNumber "
+                    + customerDto.getMobileNumber());
         }
-
         Customer savedCustomer = customerRepository.save(customer);
-        accountsRepository.save(createNewAccount(savedCustomer));
+        Accounts newAccount = accountsRepository.save(createNewAccount(savedCustomer));
+        logger.debug("Created new account with accountNumber: {} for customerId: {}",
+                newAccount.getAccountNumber(), savedCustomer.getCustomerId());
+        meterRegistry.counter("accounts.operations", "operation", "created").increment();
     }
 
     private Accounts createNewAccount(Customer customer){
@@ -67,27 +77,25 @@ public class AccountsService {
 
     public boolean updateAccount(CustomerDTO customerDTO){
         boolean isUpdated = false;
-        AccountsDTO accountsDTO = customerDTO.getAccountsDto();
-        if(accountsDTO != null){
-            Accounts accounts = accountsRepository.findById(accountsDTO.getAccountNumber()).orElseThrow(
-                    () -> new ResourceNotFoundException("Account", "AccountNumber", accountsDTO.getAccountNumber().toString())
+        AccountsDTO accountsDto = customerDTO.getAccountsDto();
+        if(accountsDto !=null ){
+            logger.debug("Updating account with accountNumber: {}", accountsDto.getAccountNumber());
+            Accounts accounts = accountsRepository.findById(accountsDto.getAccountNumber()).orElseThrow(
+                    () -> new ResourceNotFoundException("Account", "AccountNumber", accountsDto.getAccountNumber().toString())
             );
+            AccountsMapper.mapToAccounts(accountsDto, accounts);
+            accounts = accountsRepository.save(accounts);
 
             Long customerId = accounts.getCustomerId();
             Customer customer = customerRepository.findById(customerId).orElseThrow(
                     () -> new ResourceNotFoundException("Customer", "CustomerID", customerId.toString())
             );
-
-            CustomerMapper.mapToCustomer(customerDTO, customer);
+            CustomerMapper.mapToCustomer(customerDTO,customer);
             customerRepository.save(customer);
-
-            AccountsMapper.mapToAccounts(accountsDTO, accounts);
-            accountsRepository.save(accounts);
-
             isUpdated = true;
         }
-
-        return isUpdated;
+        meterRegistry.counter("accounts.operations", "operation", "updated").increment();
+        return  isUpdated;
     }
 
     public boolean deleteAccount(String mobileNumber) {
@@ -96,6 +104,8 @@ public class AccountsService {
         );
         accountsRepository.deleteByCustomerId(customer.getCustomerId());
         customerRepository.deleteById(customer.getCustomerId());
+        logger.debug("Deleted account and customer records for customerId: {}", customer.getCustomerId());
+        meterRegistry.counter("accounts.operations", "operation", "deleted").increment();
         return true;
     }
 

@@ -13,6 +13,5 @@ public interface CardsClient {
  
     @GetExchange (value = "/fetch", accept = "application/json")
     ResponseEntity<CardsDTO> fetchCardDetails(
-        @RequestHeader("correlation-id") String correlationId,
         @RequestParam String mobileNumber);
 }

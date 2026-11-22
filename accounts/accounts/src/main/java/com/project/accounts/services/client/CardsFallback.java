@@ -10,7 +10,7 @@ import com.project.accounts.dto.CardsDTO;
 @HttpServiceFallback(value=CardsFallback.class, group = "cards")
 public class CardsFallback {
 
-    public ResponseEntity<CardsDTO> fetchCardDetails(String correlationId, String mobileNumber){
+    public ResponseEntity<CardsDTO> fetchCardDetails(String mobileNumber){
         return null;
     }
 

@@ -33,13 +33,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class CardsController {
     
     private static final Logger logger = LoggerFactory.getLogger(CardsController.class);
-    private final CardsService cardsService;
-    public CardsController(CardsService cardsService){
+    private CardsService cardsService;
+    private CardsContactInfoDto cardsContactInfoDto;
+    
+    public CardsController(CardsService cardsService,
+        CardsContactInfoDto cardsContactInfoDto
+    ){
         this.cardsService = cardsService;
+        this.cardsContactInfoDto = cardsContactInfoDto;
     }
-
-    @Autowired 
-    CardsContactInfoDto cardsContactInfoDto;
 
 
     @Value ("${build.version")
@@ -49,47 +51,57 @@ public class CardsController {
     public ResponseEntity<ResponseDto> createCard(@Valid @RequestParam 
         String mobileNumber
     ) {
+        logger.info("Creating card for mobileNumber: {}", mobileNumber);
         cardsService.createCard(mobileNumber);
-        return ResponseEntity.status(HttpStatus.CREATED)
-        .body(new ResponseDto(CardsConstants.STATUS_201, CardsConstants.MESSAGE_201));
+        logger.info("Successfully created card for mobileNumber: {}", mobileNumber);
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(new ResponseDto(CardsConstants.STATUS_201, CardsConstants.MESSAGE_201));
+
     }
 
 
     @GetMapping("/fetch")
     public ResponseEntity<CardsDto> fetchCardDetails(
-        @RequestHeader("correlation-id") String correlationId,
         @Valid @RequestParam String mobileNumber
     ) {
-        logger.debug("correlation-id found: {} ", correlationId);
+        logger.info("Fetching card details for mobileNumber: {}", mobileNumber);
         CardsDto cardsDto = cardsService.fetchCard(mobileNumber);
-        return ResponseEntity.status(HttpStatus.OK)
-        .body(cardsDto);
+        logger.info("Successfully fetched card details for mobileNumber: {}", mobileNumber);
+        return ResponseEntity.status(HttpStatus.OK).body(cardsDto);
     }
 
     @GetMapping("/update")
     public ResponseEntity<ResponseDto> updateCardDetails(@Valid @RequestParam 
         CardsDto cardsDto
     ) {
+        logger.info("Updating card details for cardNumber: {}", cardsDto.getCardNumber());
         boolean isUpdated = cardsService.updateCard(cardsDto);
-        if(isUpdated){
-            return ResponseEntity.status(HttpStatus.OK)
-            .body(new ResponseDto(CardsConstants.STATUS_200, CardsConstants.MESSAGE_200));
-        }else{
+        if(isUpdated) {
+            logger.info("Successfully updated card details for cardNumber: {}", cardsDto.getCardNumber());
             return ResponseEntity
-            .status(HttpStatus.EXPECTATION_FAILED)
-            .body(new ResponseDto(CardsConstants.STATUS_417, CardsConstants.MESSAGE_417_UPDATE));
+                    .status(HttpStatus.OK)
+                    .body(new ResponseDto(CardsConstants.STATUS_200, CardsConstants.MESSAGE_200));
+        }else{
+            logger.warn("Failed to update card details for cardNumber: {}", cardsDto.getCardNumber());
+            return ResponseEntity
+                    .status(HttpStatus.EXPECTATION_FAILED)
+                    .body(new ResponseDto(CardsConstants.STATUS_417, CardsConstants.MESSAGE_417_UPDATE));
         }
         
     }
 
     @DeleteMapping("/delete")
     public ResponseEntity<ResponseDto> deleteCardDetails(@RequestParam String mobileNumber) {
+        logger.info("Deleting card details for mobileNumber: {}", mobileNumber);
         boolean isDeleted = cardsService.deleteCard(mobileNumber);
         if(isDeleted) {
+            logger.info("Successfully deleted card details for mobileNumber: {}", mobileNumber);
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(new ResponseDto(CardsConstants.STATUS_200, CardsConstants.MESSAGE_200));
         }else{
+            logger.warn("Failed to delete card details for mobileNumber: {}", mobileNumber);
             return ResponseEntity
                     .status(HttpStatus.EXPECTATION_FAILED)
                     .body(new ResponseDto(CardsConstants.STATUS_417, CardsConstants.MESSAGE_417_DELETE));

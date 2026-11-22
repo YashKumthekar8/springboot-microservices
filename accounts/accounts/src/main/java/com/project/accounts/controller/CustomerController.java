@@ -32,11 +32,11 @@ public class CustomerController {
     }
 
     @GetMapping("/fetchCustomerDetails")
-    public ResponseEntity<CustomerDetailsDTO> fetchCustomerDetails(
-        @RequestHeader("correlation-id") String correlationId,
-        @RequestParam String mobileNumber) {
-            logger.debug("correlation-id found: {} ", correlationId);
-        CustomerDetailsDTO customerDetailsDto = customerService.fetchCustomerDetails(mobileNumber, correlationId);
+    public ResponseEntity<CustomerDetailsDTO> fetchCustomerDetails(@RequestParam String mobileNumber) {
+
+        logger.info("Fetching customer details for mobileNumber: {}", mobileNumber);
+        CustomerDetailsDTO customerDetailsDto = customerService.fetchCustomerDetails(mobileNumber);
+        logger.info("Successfully fetched customer details for mobileNumber: {}", mobileNumber);
         return ResponseEntity.status(HttpStatus.SC_OK).body(customerDetailsDto);
     }
     
